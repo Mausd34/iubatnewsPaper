@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} — {{ BRAND.NAME }}{% endblock %}
+{% block meta_description %}Browse {{ page_title|lower }} on the IUBAT Campus Newspaper portal.{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8 grid lg:grid-cols-4 gap-8">
+
+  {# ---------------- Filters sidebar ---------------- #}
+  <aside class="lg:col-span-1 order-2 lg:order-1">
+    <div class="bg-white rounded-xl border shadow-sm p-5 sticky top-20">
+      <h2 class="font-bold text-gray-900 mb-3">🔎 Refine results</h2>
+      <form method="get" action="{% url 'articles:search' %}" class="space-y-4 text-sm">
+        <input type="search" name="q" value="{{ query }}" placeholder="Search…"
+               class="w-full rounded-lg border-gray-300 focus:border-iubat focus:ring-iubat">
+
+        <div>
+          <label class="font-semibold text-gray-700 block mb-1">Category</label>
+          <select name="category" class="w-full rounded-lg border-gray-300">
+            <option value="">All categories</option>
+            {% for cat in nav_categories %}
+              <option value="{{ cat.slug }}" {% if active_category.slug == cat.slug %}selected{% endif %}>
+                {{ cat.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="font-semibold text-gray-700 block mb-1">Year</label>
+            <input type="number" name="year" value="{{ year|default:'' }}" min="2020" max="{% now 'Y' %}"
+                   class="w-full rounded-lg border-gray-300">
+          </div>
+          <div>
+            <label class="font-semibold text-gray-700 block mb-1">Month</label>
+            <select name="month" class="w-full rounded-lg border-gray-300">
+              <option value="">—</option>
+              {% for m in "x"|rjust:"12" %}<option value="{{ forloop.counter }}" {% if month == forloop.counter|stringformat:"s" %}selected{% endif %}>{{ forloop.counter }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="font-semibold text-gray-700 block mb-1">Sort by</label>
+          <select name="sort" class="w-full rounded-lg border-gray-300">
+            <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest first</option>
+            <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest first</option>
+            <option value="popular" {% if sort == 'popular' %}selected{% endif %}>Most viewed</option>
+          </select>
+        </div>
+
+        <label class="flex items-center gap-2 text-gray-700">
+          <input type="checkbox" name="featured" value="1" class="rounded text-iubat focus:ring-iubat"
+                 {% if request.GET.featured %}checked{% endif %}>
+          Featured only
+        </label>
+
+        <button type="submit" class="w-full bg-iubat text-white font-semibold py-2 rounded-lg hover:bg-iubat-dark">Apply filters</button>
+        <a href="{% url 'articles:list' %}" class="block text-center text-gray-500 hover:text-iubat">Clear all</a>
+      </form>
+
+      {% if popular_tags %}
+      <div class="mt-6 border-t pt-4">
+        <h3 class="font-semibold text-gray-700 mb-2">Popular tags</h3>
+        <div class="flex flex-wrap gap-1.5">
+          {% for tag in popular_tags %}
+            {% if tag.n %}
+              <a href="{{ tag.get_absolute_url }}"
+                 class="text-xs bg-gray-100 hover:bg-iubat-light hover:text-iubat px-2.5 py-1 rounded-full">#{{ tag.name }}</a>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </aside>
+
+  {# ---------------- Results ---------------- #}
+  <div class="lg:col-span-3 order-1 lg:order-2">
+    <div class="flex flex-wrap items-end justify-between gap-3 mb-6">
+      <div>
+        <h1 class="font-serif text-3xl font-extrabold text-iubat-dark">{{ page_title }}</h1>
+        {% if category_description %}<p class="text-gray-600 mt-1">{{ category_description }}</p>{% endif %}
+        <p class="text-sm text-gray-500 mt-1">{{ paginator.count }} article{{ paginator.count|pluralize }}</p>
+      </div>
+    </div>
+
+    {% if articles %}
+      <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
+        {% for article in articles %}
+          {% include "includes/article_card.html" %}
+        {% endfor %}
+      </div>
+      {% include "includes/pagination.html" %}
+    {% else %}
+      <div class="bg-white border rounded-xl p-12 text-center">
+        <p class="text-5xl mb-3">📭</p>
+        <h2 class="font-serif text-xl font-bold mb-1">No articles found</h2>
+        <p class="text-gray-500 mb-4">Try different keywords or clear the filters.</p>
+        <a href="{% url 'articles:list' %}" class="inline-block bg-iubat text-white text-sm font-semibold px-5 py-2 rounded-full">Browse all news</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

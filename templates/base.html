@@ -1,0 +1,263 @@
+{% load static humanize %}<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+
+  {# ---------- SEO ---------- #}
+  <title>{% block title %}{{ BRAND.NAME }} — {{ BRAND.TAGLINE }}{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}IUBAT Campus News — the independent student voice of the International University of Business Agriculture and Technology. Campus news, events, sports, clubs, achievements and notices.{% endblock %}">
+  <meta name="keywords" content="IUBAT, campus newspaper, university news, student journalism, Bangladesh">
+  <meta name="author" content="{{ BRAND.NAME }}">
+  <link rel="canonical" href="{% block canonical %}{{ request.build_absolute_uri }}{% endblock %}">
+
+  {# Open Graph / social #}
+  <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+  <meta property="og:title" content="{{ self.title }}">
+  <meta property="og:description" content="{{ self.meta_description }}">
+  <meta property="og:site_name" content="{{ BRAND.NAME }}">
+  {% block og_image %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'img/logo.svg' %}">{% endblock %}
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" href="{% static 'img/logo.svg' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap"
+        rel="stylesheet">
+
+  {# ---------- Tailwind CSS (CDN) ---------- #}
+  <script>
+    tailwind = window.tailwind || {};
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            iubat: {
+              DEFAULT: "#006400",
+              dark: "#004d00",
+              light: "#e8f3e8",
+              accent: "#008000",
+            },
+          },
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+            serif: ['"Playfair Display"', 'Georgia', 'serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+
+  {# ---------- Alpine.js ---------- #}
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body class="min-h-screen flex flex-col bg-gray-50 text-gray-900 antialiased">
+
+{# ===================== TOP BAR ===================== #}
+<div class="bg-iubat-dark text-white text-xs">
+  <div class="max-w-7xl mx-auto px-4 py-1.5 flex items-center justify-between">
+    <p class="flex items-center gap-2">
+      <span class="hidden sm:inline">{{ BRAND.FULL_NAME }}</span>
+      <span class="sm:hidden">IUBAT</span>
+    </p>
+    <p class="flex items-center gap-3">
+      <span x-data="{ now: new Date() }" x-text="now.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })"></span>
+      {% if user.is_authenticated %}
+        <a href="{% url 'dashboard:home' %}" class="underline underline-offset-2 hover:text-green-200">Dashboard</a>
+      {% endif %}
+    </p>
+  </div>
+</div>
+
+{# ===================== NAVBAR ===================== #}
+<header class="bg-white shadow-sm sticky top-0 z-40" x-data="{ mobileOpen: false }">
+  <nav class="max-w-7xl mx-auto px-4">
+    <div class="flex items-center justify-between h-16">
+      <a href="{% url 'core:home' %}" class="flex items-center gap-2.5 shrink-0">
+        <img src="{% static 'img/logo.svg' %}" alt="IUBAT" class="w-9 h-9">
+        <span class="leading-tight">
+          <span class="block font-serif font-extrabold text-lg text-iubat">IUBAT Campus News</span>
+          <span class="hidden sm:block text-[10px] uppercase tracking-widest text-gray-500">The student voice</span>
+        </span>
+      </a>
+
+      <div class="hidden lg:flex items-center gap-1 text-sm font-medium">
+        <a href="{% url 'articles:list' %}" class="px-3 py-2 rounded hover:bg-iubat-light hover:text-iubat transition">All News</a>
+        {% for cat in nav_categories %}
+          <a href="{{ cat.get_absolute_url }}"
+             class="px-3 py-2 rounded hover:bg-iubat-light hover:text-iubat transition whitespace-nowrap">
+            {{ cat.icon }} {{ cat.name }}
+          </a>
+        {% endfor %}
+      </div>
+
+      <div class="flex items-center gap-2">
+        <form action="{% url 'articles:search' %}" method="get" class="hidden md:block">
+          <div class="relative">
+            <input type="search" name="q" value="{{ request.GET.q|default_if_none:'' }}"
+                   placeholder="Search news…"
+                   class="w-44 focus:w-56 transition-all rounded-full border-gray-300 text-sm pl-9 pr-3 py-1.5 focus:border-iubat focus:ring-iubat">
+            <svg class="w-4 h-4 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
+        </form>
+
+        {% if user.is_authenticated %}
+          <div class="relative hidden sm:block" x-data="{ open: false }" @click.outside="open = false">
+            <button @click="open = !open" class="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-gray-100">
+              <img src="{{ user.get_profile_picture }}" class="w-8 h-8 rounded-full object-cover" alt="">
+              <span class="text-sm font-medium max-w-[110px] truncate">{{ user.display_name }}</span>
+              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div x-show="open" x-cloak class="absolute right-0 mt-2 w-52 bg-white rounded-lg shadow-lg border py-1 text-sm">
+              <a href="{{ user.get_absolute_url }}" class="block px-4 py-2 hover:bg-gray-50">My profile</a>
+              {% if user.can_submit_articles %}
+                <a href="{% url 'articles:create' %}" class="block px-4 py-2 hover:bg-gray-50">✍️ Submit article</a>
+                <a href="{% url 'articles:my_articles' %}" class="block px-4 py-2 hover:bg-gray-50">My articles</a>
+              {% endif %}
+              <a href="{% url 'dashboard:home' %}" class="block px-4 py-2 hover:bg-gray-50">📊 Dashboard</a>
+              <div class="border-t my-1"></div>
+              <form method="post" action="{% url 'accounts:logout' %}" class="block">
+                {% csrf_token %}
+                <button type="submit" class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50">Log out</button>
+              </form>
+            </div>
+          </div>
+        {% else %}
+          <a href="{% url 'accounts:login' %}" class="hidden sm:inline text-sm font-medium px-3 py-1.5 rounded hover:text-iubat">Log in</a>
+          <a href="{% url 'accounts:register' %}" class="hidden sm:inline text-sm font-semibold px-4 py-1.5 rounded-full bg-iubat text-white hover:bg-iubat-dark transition">Register</a>
+        {% endif %}
+
+        <button @click="mobileOpen = !mobileOpen" class="lg:hidden p-2 rounded hover:bg-gray-100" aria-label="Menu">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path x-show="!mobileOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            <path x-show="mobileOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    {# Mobile menu #}
+    <div x-show="mobileOpen" x-cloak class="lg:hidden pb-4 space-y-1 text-sm">
+      <form action="{% url 'articles:search' %}" method="get" class="pb-2">
+        <input type="search" name="q" placeholder="Search news…"
+               class="w-full rounded-full border-gray-300 px-4 py-2 focus:border-iubat focus:ring-iubat">
+      </form>
+      <a href="{% url 'articles:list' %}" class="block px-3 py-2 rounded hover:bg-iubat-light">All News</a>
+      {% for cat in nav_categories %}
+        <a href="{{ cat.get_absolute_url }}" class="block px-3 py-2 rounded hover:bg-iubat-light">{{ cat.icon }} {{ cat.name }}</a>
+      {% endfor %}
+      <div class="border-t pt-2 mt-2">
+        {% if user.is_authenticated %}
+          <a href="{% url 'dashboard:home' %}" class="block px-3 py-2">📊 Dashboard</a>
+          <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}
+            <button class="block px-3 py-2 text-red-600 w-full text-left">Log out</button>
+          </form>
+        {% else %}
+          <a href="{% url 'accounts:login' %}" class="block px-3 py-2">Log in</a>
+          <a href="{% url 'accounts:register' %}" class="block px-3 py-2 font-semibold text-iubat">Register</a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+</header>
+
+{# ===================== MESSAGES ===================== #}
+{% if messages %}
+  <div class="max-w-7xl mx-auto w-full px-4 mt-4 space-y-2">
+    {% for message in messages %}
+      <div x-data="{ show: true }" x-show="show"
+           class="flex items-center justify-between rounded-lg border px-4 py-3 text-sm
+                  {% if message.tags == 'success' %}bg-green-50 border-green-200 text-green-800
+                  {% elif message.tags == 'error' %}bg-red-50 border-red-200 text-red-800
+                  {% elif message.tags == 'warning' %}bg-amber-50 border-amber-200 text-amber-800
+                  {% else %}bg-blue-50 border-blue-200 text-blue-800{% endif %}">
+        <span>{{ message }}</span>
+        <button @click="show = false" class="ml-3 font-bold opacity-60 hover:opacity-100">×</button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{# ===================== CONTENT ===================== #}
+<main class="flex-1 w-full">
+  {% block content %}{% endblock %}
+</main>
+
+{# ===================== FOOTER ===================== #}
+<footer class="bg-iubat-dark text-green-100 mt-16">
+  <div class="max-w-7xl mx-auto px-4 py-12 grid gap-10 md:grid-cols-4">
+    <div class="md:col-span-1">
+      <div class="flex items-center gap-2 mb-3">
+        <img src="{% static 'img/logo.svg' %}" class="w-9 h-9 bg-white rounded p-0.5" alt="">
+        <span class="font-serif font-extrabold text-white text-lg">IUBAT Campus News</span>
+      </div>
+      <p class="text-sm text-green-200/80">{{ BRAND.TAGLINE }}. Run by students, for the IUBAT community.</p>
+    </div>
+
+    <div>
+      <h4 class="font-semibold text-white mb-3">Sections</h4>
+      <ul class="space-y-2 text-sm">
+        {% for cat in nav_categories %}
+          <li><a href="{{ cat.get_absolute_url }}" class="hover:text-white">{{ cat.name }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div>
+      <h4 class="font-semibold text-white mb-3">Portal</h4>
+      <ul class="space-y-2 text-sm">
+        <li><a href="{% url 'articles:list' %}" class="hover:text-white">All articles</a></li>
+        <li><a href="{% url 'core:about' %}" class="hover:text-white">About us</a></li>
+        <li><a href="{% url 'core:contact' %}" class="hover:text-white">Contact / tip line</a></li>
+        {% if user.can_submit_articles %}
+          <li><a href="{% url 'articles:create' %}" class="hover:text-white">Submit an article</a></li>
+        {% endif %}
+        <li><a href="{% url 'api:api-root' %}" class="hover:text-white">REST API</a></li>
+      </ul>
+    </div>
+
+    <div x-data="newsletterForm()">
+      <h4 class="font-semibold text-white mb-3">📬 Weekly newsletter</h4>
+      <p class="text-sm text-green-200/80 mb-3">Get the week's biggest campus stories in your inbox.</p>
+      <form method="post" action="{% url 'newsletter:subscribe' %}" @submit.prevent="subscribe()" class="flex">
+        {% csrf_token %}
+        <input type="email" name="email" required placeholder="you@example.com"
+               class="min-w-0 flex-1 rounded-l-lg px-3 py-2 text-sm text-gray-900 focus:outline-none">
+        <button type="submit" :disabled="loading"
+                class="bg-amber-400 hover:bg-amber-300 text-gray-900 font-semibold text-sm px-4 rounded-r-lg">
+          <span x-show="!loading">Join</span>
+          <span x-show="loading">…</span>
+        </button>
+      </form>
+      <p x-show="message" x-text="message"
+         :class="error ? 'text-red-300' : 'text-green-200'"
+         class="text-xs mt-2"></p>
+    </div>
+  </div>
+
+  <div class="border-t border-white/10">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between text-xs text-green-200/70 gap-2">
+      <p>© {% now "Y" %} {{ BRAND.FULL_NAME }}. All rights reserved.</p>
+      <div class="flex gap-4">
+        <a href="{% url 'core:about' %}" class="hover:text-white">About</a>
+        <a href="{% url 'core:contact' %}" class="hover:text-white">Contact</a>
+        <a href="/sitemap.xml" class="hover:text-white">Sitemap</a>
+        <a href="/robots.txt" class="hover:text-white">Robots</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+[x-cloak] { display: none !important; }
+
+<script src="{% static 'js/main.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

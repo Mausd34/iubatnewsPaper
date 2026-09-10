@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}About — {{ BRAND.NAME }}{% endblock %}
+{% block meta_description %}About the IUBAT Campus Newspaper — an independent student-run news portal of the International University of Business Agriculture and Technology.{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-12">
+  <div class="bg-iubat text-white rounded-2xl p-10 text-center mb-10">
+    <h1 class="font-serif text-4xl font-extrabold mb-2">About IUBAT Campus News</h1>
+    <p class="text-green-100">{{ BRAND.TAGLINE }}</p>
+  </div>
+
+  <div class="prose max-w-none article-body">
+    <h2>Who we are</h2>
+    <p>IUBAT Campus News is the independent student newspaper of the
+      <strong>International University of Business Agriculture and Technology (IUBAT)</strong>.
+      We are a student-led editorial project covering campus news, events, sports,
+      academics, clubs, student achievements and official notices — the stories
+      that matter to our community.</p>
+
+    <h2>Our sections</h2>
+    <ul>
+      <li><strong>Campus News</strong> — what's happening across the university</li>
+      <li><strong>Events</strong> — seminars, fairs, cultural programs and deadlines</li>
+      <li><strong>Sports</strong> — fixtures, results and athletes of IUBAT</li>
+      <li><strong>Academic</strong> — research, exams, results and classroom stories</li>
+      <li><strong>Clubs</strong> — student club activities and volunteering</li>
+      <li><strong>Achievements</strong> — awards, competitions and alumni success</li>
+      <li><strong>Notice Board</strong> — official announcements</li>
+    </ul>
+
+    <h2>How contributions work</h2>
+    <p>Any registered student can become a <strong>Student Contributor</strong>.
+      Submissions enter an editorial approval queue. Faculty authors and editors
+      can publish directly. Every published article carries the author's byline
+      and builds a public writing portfolio on their profile.</p>
+
+    <h2>Editorial guidelines</h2>
+    <ol>
+      <li>Be accurate — verify names, dates and quotes before submitting.</li>
+      <li>Be fair — give people a chance to respond to criticism.</li>
+      <li>Be original — no plagiarism, and credit all images and sources.</li>
+      <li>Be respectful — no harassment, hate speech or personal attacks.</li>
+      <li>Declare conflicts of interest.</li>
+    </ol>
+
+    <h2>Contact the editorial team</h2>
+    <p>Got a news tip, a correction or a press release? Visit our
+      <a href="{% url 'core:contact' %}">contact page</a> or email
+      <a href="mailto:news@iubatnews.edu">news@iubatnews.edu</a>.</p>
+  </div>
+
+  <div class="text-center mt-10">
+    <a href="{% url 'accounts:register' %}" class="inline-block bg-iubat text-white font-semibold px-7 py-3 rounded-full hover:bg-iubat-dark">Join the newsroom</a>
+    <a href="{% url 'articles:create' %}" class="inline-block border font-semibold px-7 py-3 rounded-full hover:bg-gray-100 ml-2">Submit a story</a>
+  </div>
+</div>
+{% endblock %}

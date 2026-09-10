@@ -1,0 +1,29 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% block title %}{{ email_obj.subject }} — Newsletter{% endblock %}
+
+{% block dashboard_content %}
+<div class="max-w-3xl">
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+    <div>
+      <h1 class="font-serif text-2xl font-extrabold text-iubat-dark">{{ email_obj.subject }}</h1>
+      <p class="text-sm text-gray-500">
+        {% if email_obj.status == 'sent' %}
+          Sent {{ email_obj.sent_at }} to {{ email_obj.recipients_count }} subscriber{{ email_obj.recipients_count|pluralize }}.
+        {% else %}Draft — not yet sent.{% endif %}
+      </p>
+    </div>
+    <div class="flex gap-2">
+      {% if email_obj.status != 'sent' %}
+        <a href="{% url 'newsletter:edit' email_obj.pk %}" class="px-4 py-2 rounded-lg border text-sm font-semibold hover:bg-gray-50">✏️ Edit</a>
+        <form method="post" action="{% url 'newsletter:send' email_obj.pk %}"
+              onsubmit="return confirm('Send this newsletter now?')">
+          {% csrf_token %}
+          <button class="px-4 py-2 rounded-lg bg-iubat text-white text-sm font-semibold hover:bg-iubat-dark">📨 Send now</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="bg-white border rounded-xl p-8 article-body">{{ email_obj.body|safe|linebreaks }}</div>
+</div>
+{% endblock %}

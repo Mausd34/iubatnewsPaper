@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Edit profile — {{ BRAND.NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-10">
+  <h1 class="font-serif text-3xl font-extrabold text-iubat-dark mb-6">Edit your profile</h1>
+
+  <form method="post" enctype="multipart/form-data" class="bg-white rounded-xl border shadow-sm p-6 space-y-4">
+    {% csrf_token %}
+    {% if form.errors %}
+      <div class="bg-red-50 border border-red-200 text-red-700 rounded p-3 text-sm">Please fix the errors below.</div>
+    {% endif %}
+
+    <div class="flex items-center gap-5">
+      <img src="{{ user.get_profile_picture }}" class="w-20 h-20 rounded-full object-cover" alt="">
+      <div>
+        <label class="font-semibold text-sm block mb-1">Profile picture</label>
+        {{ form.profile_picture }}
+      </div>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div><label class="font-semibold text-sm block mb-1">First name</label>{{ form.first_name }}</div>
+      <div><label class="font-semibold text-sm block mb-1">Last name</label>{{ form.last_name }}</div>
+    </div>
+    <div><label class="font-semibold text-sm block mb-1">Email</label>{{ form.email }}{{ form.email.errors }}</div>
+
+    <div class="grid sm:grid-cols-3 gap-4">
+      <div><label class="font-semibold text-sm block mb-1">Student ID</label>{{ form.student_id }}</div>
+      <div><label class="font-semibold text-sm block mb-1">Department</label>{{ form.department }}</div>
+      <div><label class="font-semibold text-sm block mb-1">Batch</label>{{ form.batch }}</div>
+    </div>
+    <div><label class="font-semibold text-sm block mb-1">Phone</label>{{ form.phone }}</div>
+    <div><label class="font-semibold text-sm block mb-1">Bio</label>{{ form.bio }}</div>
+
+    <div class="pt-3 border-t flex justify-end gap-3">
+      <a href="{{ user.get_absolute_url }}" class="px-5 py-2.5 rounded-lg border text-sm font-semibold hover:bg-gray-50">Cancel</a>
+      <button type="submit" class="px-5 py-2.5 rounded-lg bg-iubat text-white text-sm font-semibold hover:bg-iubat-dark">Save changes</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

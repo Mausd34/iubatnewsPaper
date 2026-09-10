@@ -1,0 +1,64 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block title %}Comment moderation — Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+  <h1 class="font-serif text-3xl font-extrabold text-iubat-dark">Comment moderation</h1>
+  <div class="flex rounded-lg border overflow-hidden text-sm">
+    <a href="{% url 'dashboard:comment_moderation' %}"
+       class="px-4 py-2 {% if queue == 'pending' %}bg-iubat text-white{% else %}bg-white hover:bg-gray-50{% endif %}">
+      Pending ({{ pending_count }})
+    </a>
+    <a href="{% url 'dashboard:comment_moderation_approved' %}"
+       class="px-4 py-2 {% if queue == 'approved' %}bg-iubat text-white{% else %}bg-white hover:bg-gray-50{% endif %}">
+      Approved
+    </a>
+  </div>
+</div>
+
+<div class="space-y-3">
+  {% for comment in comments %}
+  <div class="bg-white rounded-xl border p-4 {% if not comment.is_approved %}border-amber-300{% endif %}">
+    <div class="flex items-start gap-3">
+      <img src="{{ comment.user.get_profile_picture }}" class="w-9 h-9 rounded-full object-cover" alt="">
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold">
+          {{ comment.user.display_name }}
+          <span class="font-normal text-gray-400">{{ comment.created_at|naturaltime }}</span>
+          {% if not comment.is_approved %}<span class="ml-2 text-amber-700 text-xs font-bold">AWAITING MODERATION</span>{% endif %}
+        </p>
+        <p class="text-sm text-gray-700 mt-1">{{ comment.body }}</p>
+        <p class="text-xs text-gray-400 mt-1">
+          on <a href="{{ comment.article.get_absolute_url }}" class="underline hover:text-iubat">{{ comment.article.title|truncatechars:70 }}</a>
+        </p>
+        <div class="flex gap-2 mt-2">
+          {% if not comment.is_approved %}
+          <form method="post" action="{% url 'articles:comment_action' comment.pk 'approve' %}">
+            {% csrf_token %}
+            <button class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-green-700 text-white hover:bg-green-800">Approve</button>
+          </form>
+          {% else %}
+          <form method="post" action="{% url 'articles:comment_action' comment.pk 'hide' %}">
+            {% csrf_token %}
+            <button class="text-xs font-semibold px-3 py-1.5 rounded-lg border hover:bg-gray-50">Hide</button>
+          </form>
+          {% endif %}
+          <form method="post" action="{% url 'articles:comment_action' comment.pk 'delete' %}"
+                onsubmit="return confirm('Delete this comment permanently?')">
+            {% csrf_token %}
+            <button class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50">Delete</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="bg-white border rounded-xl p-12 text-center text-gray-500">
+    <p class="text-4xl mb-2">✅</p>
+    <p class="font-semibold">No comments {% if queue == 'pending' %}awaiting moderation{% else %}yet{% endif %}.</p>
+  </div>
+  {% endfor %}
+</div>
+{% include "includes/pagination.html" %}
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block title %}Dashboard — {{ BRAND.NAME }}{% endblock %}
+
+{% block dashboard_content %}
+<h1 class="font-serif text-3xl font-extrabold text-iubat-dark mb-1">
+  Welcome, {{ user.first_name|default:user.username }} 👋
+</h1>
+<p class="text-gray-500 text-sm mb-6">Here's what's happening
+  {% if user.is_editor_role %}across the portal{% else %}with your articles{% endif %}.</p>
+
+{# ---------------- Stat cards ---------------- #}
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+  <div class="bg-white rounded-xl border p-5">
+    <p class="text-3xl font-extrabold text-iubat">{{ total_articles }}</p>
+    <p class="text-sm text-gray-500">Published</p>
+  </div>
+  <div class="bg-white rounded-xl border p-5">
+    <p class="text-3xl font-extrabold text-amber-500">{{ pending_count }}</p>
+    <p class="text-sm text-gray-500">Pending review</p>
+  </div>
+  <div class="bg-white rounded-xl border p-5">
+    <p class="text-3xl font-extrabold text-blue-600">{{ total_views|intcomma }}</p>
+    <p class="text-sm text-gray-500">Total views</p>
+  </div>
+  <div class="bg-white rounded-xl border p-5">
+    <p class="text-3xl font-extrabold text-purple-600">{{ total_comments }}</p>
+    <p class="text-sm text-gray-500">Comments</p>
+  </div>
+  {% if user.is_editor_role %}
+    <div class="bg-white rounded-xl border p-5">
+      <p class="text-3xl font-extrabold text-gray-800">{{ total_users }}</p>
+      <p class="text-sm text-gray-500">Registered users</p>
+    </div>
+    <div class="bg-white rounded-xl border p-5">
+      <p class="text-3xl font-extrabold text-gray-800">{{ draft_count }}</p>
+      <p class="text-sm text-gray-500">Drafts</p>
+    </div>
+    <div class="bg-white rounded-xl border p-5">
+      <p class="text-3xl font-extrabold text-red-500">{{ rejected_count }}</p>
+      <p class="text-sm text-gray-500">Rejected</p>
+    </div>
+    <div class="bg-white rounded-xl border p-5">
+      <p class="text-3xl font-extrabold text-teal-600">{{ subscriber_count }}</p>
+      <p class="text-sm text-gray-500">Newsletter subscribers</p>
+    </div>
+  {% endif %}
+</div>
+
+{% if user.is_editor_role %}
+{# ---------------- Charts (Chart.js) ---------------- #}
+<div class="grid lg:grid-cols-2 gap-6 mb-8">
+  <div class="bg-white rounded-xl border p-5">
+    <h2 class="font-bold mb-4">👁 Views — last 14 days</h2>
+    <canvas id="viewsChart" height="160"></canvas>
+  </div>
+  <div class="bg-white rounded-xl border p-5">
+    <h2 class="font-bold mb-4">📰 Published articles by category</h2>
+    <canvas id="categoryChart" height="160"></canvas>
+  </div>
+</div>
+
+{% if pending_articles %}
+<div class="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-8">
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="font-bold text-amber-900">⏳ Articles awaiting your review</h2>
+    <a href="{% url 'dashboard:pending_articles' %}" class="text-sm font-semibold text-amber-800 underline">Open queue →</a>
+  </div>
+  <ul class="divide-y divide-amber-100 text-sm">
+    {% for article in pending_articles %}
+      <li class="py-2 flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <a href="{% url 'dashboard:article_review' article.pk %}" class="font-semibold hover:underline truncate block">{{ article.title }}</a>
+          <p class="text-xs text-amber-700">by {{ article.author.display_name }} · {{ article.submitted_at|naturaltime }}</p>
+        </div>
+        <span class="shrink-0 text-xs bg-white border rounded-full px-2 py-1">{{ article.category.name }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endif %}
+
+{# ---------------- Recent articles ---------------- #}
+<div class="bg-white rounded-xl border shadow-sm overflow-hidden">
+  <div class="px-5 py-4 border-b flex items-center justify-between">
+    <h2 class="font-bold">{% if user.is_editor_role %}Recent articles{% else %}Your recent articles{% endif %}</h2>
+    <a href="{% url 'articles:my_articles' %}" class="text-sm text-iubat font-semibold hover:underline">Manage all →</a>
+  </div>
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50 text-left text-xs uppercase text-gray-500">
+      <tr><th class="px-5 py-2.5">Title</th><th class="px-5 py-2.5">Status</th><th class="px-5 py-2.5 hidden sm:table-cell">Updated</th></tr>
+    </thead>
+    <tbody class="divide-y">
+      {% for article in recent_articles %}
+      <tr class="hover:bg-gray-50">
+        <td class="px-5 py-2.5"><a href="{{ article.get_absolute_url }}" class="font-semibold hover:text-iubat">{{ article.title|truncatechars:70 }}</a></td>
+        <td class="px-5 py-2.5">
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full
+            {% if article.status == 'published' %}bg-green-100 text-green-800
+            {% elif article.status == 'pending' %}bg-amber-100 text-amber-800
+            {% elif article.status == 'rejected' %}bg-red-100 text-red-800
+            {% else %}bg-gray-100 text-gray-700{% endif %}">{{ article.get_status_display }}</span>
+        </td>
+        <td class="px-5 py-2.5 hidden sm:table-cell text-gray-500">{{ article.updated_at|naturaltime }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3" class="px-5 py-8 text-center text-gray-500">No articles yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if user.is_editor_role %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const viewsData = {{ views_by_day|safe }};
+  new Chart(document.getElementById('viewsChart'), {
+    type: 'line',
+    data: { labels: viewsData.labels,
+      datasets: [{ label: 'Views', data: viewsData.data,
+        borderColor: '#006400', backgroundColor: 'rgba(0,100,0,0.12)',
+        fill: true, tension: 0.3 }] },
+    options: { plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } },
+  });
+
+  const catData = {{ articles_by_category|safe }};
+  new Chart(document.getElementById('categoryChart'), {
+    type: 'doughnut',
+    data: { labels: catData.labels,
+      datasets: [{ data: catData.data,
+        backgroundColor: ['#006400','#22c55e','#84cc16','#eab308','#f59e0b','#06b6d4','#3b82f6','#8b5cf6','#ec4899'] }] },
+    options: { plugins: { legend: { position: 'bottom' } } },
+  });
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}{{ title|default:"Submit article" }} — {{ BRAND.NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <nav class="text-sm text-gray-500 mb-4">
+    <a href="{% url 'dashboard:home' %}" class="hover:text-iubat">Dashboard</a> ›
+    <span>{{ title|default:"Submit article" }}</span>
+  </nav>
+
+  <h1 class="font-serif text-3xl font-extrabold text-iubat-dark mb-2">{{ title|default:"Submit a new article" }}</h1>
+  <p class="text-gray-600 mb-6 text-sm">
+    {% if can_auto_publish %}
+      As a {{ user.get_role_display|lower }}, you can publish immediately — or send it through editorial review.
+    {% else %}
+      Your article will be reviewed by an editor before it goes live. Please follow the
+      <a href="{% url 'core:about' %}" class="underline">editorial guidelines</a>.
+    {% endif %}
+  </p>
+
+  <form method="post" enctype="multipart/form-data" class="bg-white rounded-xl border shadow-sm p-6 space-y-5">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div>
+      <label class="font-semibold text-sm block mb-1">Headline <span class="text-red-500">*</span></label>
+      {{ form.title }}
+      {{ form.title.errors }}
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="font-semibold text-sm block mb-1">Category <span class="text-red-500">*</span></label>
+        {{ form.category }}
+        {{ form.category.errors }}
+      </div>
+      <div>
+        <label class="font-semibold text-sm block mb-1">Featured image</label>
+        {{ form.featured_image }}
+        {% if article.featured_image %}
+          <p class="text-xs text-gray-500 mt-1">Current: <a href="{{ article.featured_image.url }}" class="underline" target="_blank">view image</a></p>
+        {% endif %}
+        {{ form.featured_image.errors }}
+      </div>
+    </div>
+
+    <div>
+      <label class="font-semibold text-sm block mb-1">Image caption / credit</label>
+      {{ form.image_caption }}
+    </div>
+
+    <div>
+      <label class="font-semibold text-sm block mb-1">Excerpt / summary <span class="text-red-500">*</span></label>
+      {{ form.excerpt }}
+      <p class="text-xs text-gray-400 mt-1">20–300 characters. Shown in cards, search and social previews.</p>
+      {{ form.excerpt.errors }}
+    </div>
+
+    <div>
+      <label class="font-semibold text-sm block mb-1">Body <span class="text-red-500">*</span></label>
+      {{ form.content }}
+      {{ form.content.errors }}
+    </div>
+
+    <div>
+      <label class="font-semibold text-sm block mb-2">Tags</label>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
+        {% for tag in form.tags %}
+          <label class="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 cursor-pointer hover:bg-iubat-light">
+            {{ tag.tag }} <span>{{ tag.choice_label }}</span>
+          </label>
+        {% endfor %}
+      </div>
+      {{ form.tags.errors }}
+    </div>
+
+    <div class="flex flex-wrap gap-3 pt-4 border-t">
+      <button type="submit" name="action" value="draft"
+              class="px-5 py-2.5 rounded-lg border font-semibold text-sm hover:bg-gray-50">💾 Save as draft</button>
+
+      {% if can_auto_publish %}
+        <button type="submit" name="action" value="publish"
+                class="px-5 py-2.5 rounded-lg bg-iubat text-white font-semibold text-sm hover:bg-iubat-dark ml-auto">✅ Publish now</button>
+        <button type="submit" name="action" value="submit"
+                class="px-5 py-2.5 rounded-lg bg-amber-500 text-white font-semibold text-sm hover:bg-amber-600">Send for review</button>
+      {% else %}
+        <button type="submit" name="action" value="submit"
+                class="px-5 py-2.5 rounded-lg bg-iubat text-white font-semibold text-sm hover:bg-iubat-dark ml-auto">📤 Submit for approval</button>
+      {% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}

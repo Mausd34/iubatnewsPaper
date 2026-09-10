@@ -1,0 +1,18 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% block title %}Delete category — Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div class="max-w-lg bg-white border rounded-xl p-8 text-center">
+  <p class="text-5xl mb-4">🗂️</p>
+  <h1 class="font-serif text-2xl font-extrabold mb-2">Delete “{{ object.name }}”?</h1>
+  <p class="text-gray-600 text-sm mb-6">
+    Articles in this category are protected and will <strong>not</strong> be deleted — but
+    you won't be able to delete a category that still contains articles until they are moved.
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    <a href="{% url 'dashboard:categories' %}" class="inline-block px-5 py-2.5 rounded-lg border text-sm font-semibold hover:bg-gray-50">Cancel</a>
+    <button class="px-5 py-2.5 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700">Delete category</button>
+  </form>
+</div>
+{% endblock %}

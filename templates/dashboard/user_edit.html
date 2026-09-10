@@ -1,0 +1,31 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% block title %}Edit user — Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div class="max-w-xl">
+  <h1 class="font-serif text-3xl font-extrabold text-iubat-dark mb-2">Manage user</h1>
+  <div class="flex items-center gap-3 mb-6">
+    <img src="{{ edited_user.get_profile_picture }}" class="w-12 h-12 rounded-full object-cover" alt="">
+    <div>
+      <p class="font-semibold">{{ edited_user.display_name }}</p>
+      <p class="text-sm text-gray-500">{{ edited_user.email }} · @{{ edited_user.username }}</p>
+    </div>
+  </div>
+
+  <form method="post" class="bg-white border rounded-xl p-6 space-y-4">
+    {% csrf_token %}
+    {% for field in form %}
+      <div>
+        <label class="font-semibold text-sm block mb-1">{{ field.label }}</label>
+        {{ field }}
+        {{ field.errors }}
+        {% if field.help_text %}<p class="text-xs text-gray-400 mt-1">{{ field.help_text }}</p>{% endif %}
+      </div>
+    {% endfor %}
+    <div class="flex justify-end gap-3 pt-3 border-t">
+      <a href="{% url 'dashboard:users' %}" class="px-5 py-2.5 rounded-lg border text-sm font-semibold hover:bg-gray-50">Cancel</a>
+      <button class="px-5 py-2.5 rounded-lg bg-iubat text-white text-sm font-semibold hover:bg-iubat-dark">Save user</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

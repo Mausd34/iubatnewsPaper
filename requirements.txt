@@ -1,0 +1,18 @@
+# ===== IUBAT Campus Newspaper Portal — Python dependencies =====
+Django>=5.0,<5.2
+djangorestframework>=3.15,<3.17
+djangorestframework-simplejwt>=5.3,<5.5
+django-filter>=23.5,<25
+Pillow>=10.0,<12
+django-cors-headers>=4.3,<4.7
+python-decouple>=3.8
+dj-database-url>=2.1
+django-tinymce>=4.1
+
+# Production server / database / static files
+whitenoise>=6.6
+gunicorn>=21.2
+psycopg[binary]>=3.1
+
+# Optional cloud media (activated via CLOUDINARY_* env vars)
+# cloudinary>=1.40

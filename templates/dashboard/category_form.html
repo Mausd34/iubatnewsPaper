@@ -1,0 +1,24 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% block title %}Category — Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div class="max-w-lg">
+  <h1 class="font-serif text-3xl font-extrabold text-iubat-dark mb-6">
+    {% if object %}Edit category{% else %}New category{% endif %}
+  </h1>
+  <form method="post" class="bg-white border rounded-xl p-6 space-y-4">
+    {% csrf_token %}
+    {% for field in form %}
+      <div>
+        <label class="font-semibold text-sm block mb-1">{{ field.label }}</label>
+        {{ field }}
+        {{ field.errors }}
+      </div>
+    {% endfor %}
+    <div class="flex justify-end gap-3 pt-3 border-t">
+      <a href="{% url 'dashboard:categories' %}" class="px-5 py-2.5 rounded-lg border text-sm font-semibold hover:bg-gray-50">Cancel</a>
+      <button class="px-5 py-2.5 rounded-lg bg-iubat text-white text-sm font-semibold hover:bg-iubat-dark">Save</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

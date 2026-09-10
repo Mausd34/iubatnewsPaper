@@ -1,0 +1,29 @@
+{# Django ListView pagination — preserves query string (search/filters) #}
+{% if is_paginated %}
+<nav class="flex items-center justify-center gap-1 mt-10" aria-label="Pagination">
+  {% if page_obj.has_previous %}
+    <a href="?{% with request.GET.urlencode as qs %}{{ qs }}&page={{ page_obj.previous_page_number }}{% endwith %}"
+       class="px-3 py-2 rounded-lg border bg-white text-sm hover:bg-iubat hover:text-white transition">‹ Prev</a>
+  {% else %}
+    <span class="px-3 py-2 rounded-lg border bg-gray-100 text-gray-400 text-sm">‹ Prev</span>
+  {% endif %}
+
+  {% for num in paginator.page_range %}
+    {% if num == page_obj.number %}
+      <span class="px-3.5 py-2 rounded-lg bg-iubat text-white text-sm font-semibold">{{ num }}</span>
+    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+      <a href="?{% with request.GET.urlencode as qs %}{{ qs }}&page={{ num }}{% endwith %}"
+         class="px-3.5 py-2 rounded-lg border bg-white text-sm hover:bg-iubat-light transition">{{ num }}</a>
+    {% elif num == 1 or num == paginator.num_pages %}
+      <span class="px-2 text-gray-400">…</span>
+    {% endif %}
+  {% endfor %}
+
+  {% if page_obj.has_next %}
+    <a href="?{% with request.GET.urlencode as qs %}{{ qs }}&page={{ page_obj.next_page_number }}{% endwith %}"
+       class="px-3 py-2 rounded-lg border bg-white text-sm hover:bg-iubat hover:text-white transition">Next ›</a>
+  {% else %}
+    <span class="px-3 py-2 rounded-lg border bg-gray-100 text-gray-400 text-sm">Next ›</span>
+  {% endif %}
+</nav>
+{% endif %}

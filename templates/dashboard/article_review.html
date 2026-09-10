@@ -1,0 +1,52 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block title %}Review: {{ article.title }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="bg-white rounded-xl border shadow-sm p-6 sm:p-8">
+  <div class="flex flex-wrap items-center gap-2 text-xs mb-3">
+    <span class="bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-full">{{ article.get_status_display }}</span>
+    <span class="bg-iubat-light text-iubat font-semibold px-2.5 py-1 rounded-full">{{ article.category.name }}</span>
+    <span class="text-gray-400">Submitted {{ article.submitted_at|naturaltime }}</span>
+  </div>
+
+  <h1 class="font-serif text-3xl font-extrabold mb-2">{{ article.title }}</h1>
+  <p class="text-gray-600 mb-4">{{ article.excerpt }}</p>
+
+  <div class="flex items-center gap-3 text-sm border-y py-3 mb-5">
+    <img src="{{ article.author.get_profile_picture }}" class="w-10 h-10 rounded-full object-cover" alt="">
+    <div>
+      <a href="{{ article.author.get_absolute_url }}" class="font-semibold hover:text-iubat">{{ article.author.display_name }}</a>
+      <p class="text-xs text-gray-500">{{ article.author.get_role_display }} · {{ article.author.department|default:"No department" }}</p>
+    </div>
+    <a href="{{ article.get_absolute_url }}" class="ml-auto text-sm text-iubat font-semibold hover:underline" target="_blank">Preview as author ↗</a>
+  </div>
+
+  {% if article.featured_image %}
+  <img src="{{ article.featured_image.url }}" class="rounded-xl w-full mb-4" alt="">
+  {% endif %}
+
+  <div class="article-body">{{ article.content|safe }}</div>
+
+  {# Approve #}
+  <form method="post" action="{% url 'dashboard:approve_article' article.pk %}" class="mt-8">
+    {% csrf_token %}
+    <button class="px-6 py-3 rounded-lg bg-green-700 text-white font-semibold hover:bg-green-800">
+      ✅ Approve & publish
+    </button>
+  </form>
+
+  {# Reject #}
+  <details class="mt-4 border rounded-xl">
+    <summary class="cursor-pointer px-5 py-3 font-semibold text-red-700 select-none">🚫 Reject with feedback</summary>
+    <form method="post" action="{% url 'dashboard:reject_article' article.pk %}" class="p-5 space-y-3">
+      {% csrf_token %}
+      {{ reject_form.reason }}
+      <p class="text-xs text-gray-500">The author will see your reason and can edit &amp; resubmit.</p>
+      <button class="px-5 py-2.5 rounded-lg bg-red-600 text-white font-semibold text-sm hover:bg-red-700">
+        Confirm rejection
+      </button>
+    </form>
+  </details>
+</div>
+{% endblock %}

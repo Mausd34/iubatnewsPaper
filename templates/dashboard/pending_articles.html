@@ -1,0 +1,51 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block title %}Pending articles — Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="font-serif text-3xl font-extrabold text-iubat-dark">Pending review</h1>
+    <p class="text-gray-500 text-sm">{{ pending_total }} article{{ pending_total|pluralize }} waiting for an editorial decision.</p>
+  </div>
+</div>
+
+<div class="space-y-4">
+  {% for article in articles %}
+  <div class="bg-white rounded-xl border shadow-sm p-5 flex flex-col sm:flex-row gap-4">
+    <div class="w-full sm:w-40 shrink-0 rounded-lg overflow-hidden bg-gray-100 aspect-video">
+      {% if article.featured_image %}
+        <img src="{{ article.featured_image.url }}" class="w-full h-full object-cover" alt="">
+      {% endif %}
+    </div>
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 text-xs mb-1">
+        <span class="bg-iubat-light text-iubat font-semibold px-2 py-0.5 rounded-full">{{ article.category.name }}</span>
+        {% for tag in article.tags.all %}<span class="text-gray-400">#{{ tag.name }}</span>{% endfor %}
+      </div>
+      <a href="{% url 'dashboard:article_review' article.pk %}"
+         class="font-serif font-bold text-lg hover:text-iubat">{{ article.title }}</a>
+      <p class="text-sm text-gray-600 line-clamp-2 mt-1">{{ article.excerpt }}</p>
+      <p class="text-xs text-gray-400 mt-2">
+        Submitted by <a href="{{ article.author.get_absolute_url }}" class="font-semibold hover:underline">{{ article.author.display_name }}</a>
+        ({{ article.author.get_role_display }}) · {{ article.submitted_at|naturaltime }} · ⏱ {{ article.reading_time }} min
+      </p>
+    </div>
+    <div class="flex sm:flex-col gap-2 shrink-0 justify-end">
+      <a href="{% url 'dashboard:article_review' article.pk %}"
+         class="text-center px-4 py-2 rounded-lg bg-iubat text-white text-sm font-semibold hover:bg-iubat-dark">Review</a>
+      <form method="post" action="{% url 'dashboard:approve_article' article.pk %}">
+        {% csrf_token %}
+        <button class="w-full px-4 py-2 rounded-lg border border-green-600 text-green-700 text-sm font-semibold hover:bg-green-50">✅ Approve</button>
+      </form>
+    </div>
+  </div>
+  {% empty %}
+  <div class="bg-white border rounded-xl p-12 text-center text-gray-500">
+    <p class="text-5xl mb-3">🎉</p>
+    <p class="font-semibold">The queue is empty — all caught up!</p>
+  </div>
+  {% endfor %}
+</div>
+{% include "includes/pagination.html" %}
+{% endblock %}

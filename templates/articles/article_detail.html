@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ article.title }}{% endblock %}
+{% block meta_description %}{{ article.excerpt }}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_image %}{% if article.featured_image %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ article.featured_image.url }}">{% endif %}{% endblock %}
+
+{% block extra_head %}
+{% if not article.is_published %}<meta name="robots" content="noindex">{% endif %}
+{# Structured data for Google News / rich results #}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "NewsArticle",
+  "headline": "{{ article.title|escapejs }}",
+  "description": "{{ article.excerpt|escapejs }}",
+  "datePublished": "{{ article.published_at|date:'c' }}",
+  "dateModified": "{{ article.updated_at|date:'c' }}",
+  "author": {"@type": "Person", "name": "{{ article.author.display_name }}"{% if article.author.profile_picture %}, "image": "{{ request.scheme }}://{{ request.get_host }}{{ article.author.profile_picture.url }}"{% endif %}},
+  "publisher": {"@type": "Organization", "name": "{{ BRAND.NAME }}",
+    "logo": {"@type": "ImageObject", "url": "{{ request.scheme }}://{{ request.get_host }}/static/img/logo.svg"}},
+  "mainEntityOfPage": "{{ request.build_absolute_uri }}"
+  {% if article.featured_image %},"image": "{{ request.scheme }}://{{ request.get_host }}{{ article.featured_image.url }}"{% endif %}
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<article class="max-w-4xl mx-auto px-4 py-8">
+
+  {# Workflow banner for non-published articles (author/staff only) #}
+  {% if not article.is_published %}
+    <div class="rounded-lg px-4 py-3 mb-6 text-sm font-medium
+        {% if article.status == 'pending' %}bg-amber-50 border border-amber-200 text-amber-800
+        {% elif article.status == 'rejected' %}bg-red-50 border border-red-200 text-red-800
+        {% else %}bg-gray-100 border text-gray-700{% endif %}">
+      {% if article.status == 'pending' %}⏳ This article is <strong>pending editorial approval</strong>. It is only visible to you and the editorial team.
+      {% elif article.status == 'rejected' %}🚫 This article was <strong>rejected</strong>.{% if article.rejection_reason %}<br><span class="font-normal">Reason: {{ article.rejection_reason }}</span>{% endif %}
+        <a href="{% url 'articles:update' article.slug %}" class="underline font-semibold">Edit & resubmit →</a>
+      {% else %}📝 This is a <strong>draft</strong>. Only you can see it.{% endif %}
+      {% if user.is_editor_role %}
+        <a href="{% url 'dashboard:article_review' article.pk %}" class="block mt-2 underline">Open in review queue →</a>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {# Breadcrumb #}
+  <nav class="text-sm text-gray-500 mb-4">
+    <a href="{% url 'core:home' %}" class="hover:text-iubat">Home</a> ›
+    <a href="{{ article.category.get_absolute_url }}" class="hover:text-iubat">{{ article.category.name }}</a>
+  </nav>
+
+  <header>
+    <div class="flex items-center gap-2 mb-3 text-xs">
+      <a href="{{ article.category.get_absolute_url }}"
+         class="bg-iubat text-white font-semibold px-2.5 py-1 rounded-full uppercase tracking-wide">{{ article.category.icon }} {{ article.category.name }}</a>
+      {% if article.is_featured %}<span class="bg-amber-100 text-amber-800 font-semibold px-2 py-1 rounded-full">⭐ Featured</span>{% endif %}
+      {% if article.is_breaking %}<span class="bg-red-600 text-white font-bold px-2 py-1 rounded-full uppercase">Breaking</span>{% endif %}
+    </div>
+    <h1 class="font-serif text-3xl sm:text-4xl font-extrabold leading-tight text-gray-900">{{ article.title }}</h1>
+    <p class="text-lg text-gray-600 mt-3">{{ article.excerpt }}</p>
+
+    <div class="flex flex-wrap items-center gap-4 mt-5 pb-5 border-b">
+      <a href="{{ article.author.get_absolute_url }}" class="flex items-center gap-3">
+        <img src="{{ article.author.get_profile_picture }}" class="w-11 h-11 rounded-full object-cover" alt="">
+        <div class="text-sm">
+          <p class="font-semibold flex items-center gap-1">
+            {{ article.author.display_name }}
+            {% if article.author.is_verified %}<span title="Verified">✔️</span>{% endif %}
+          </p>
+          <p class="text-gray-500">{{ article.author.get_role_display }}</p>
+        </div>
+      </a>
+      <div class="text-sm text-gray-500 ml-auto text-right">
+        <p>{{ article.published_at|default:article.created_at|date:"F j, Y" }} · ⏱ {{ article.reading_time }} min read</p>
+        <p>👁 {{ article.views_count|intcomma }} views · 💬 {{ article.comment_count }} comments</p>
+      </div>
+    </div>
+  </header>
+
+  {% if article.featured_image %}
+  <figure class="my-6">
+    <img src="{{ article.featured_image.url }}" alt="{{ article.title }}" class="w-full rounded-2xl shadow-sm">
+    {% if article.image_caption %}<figcaption class="text-xs text-gray-500 mt-2 text-center">{{ article.image_caption }}</figcaption>{% endif %}
+  </figure>
+  {% endif %}
+
+  <div class="article-body">{{ article.content|safe }}</div>
+
+  {# Tags #}
+  {% if article.tags.all %}
+  <div class="flex flex-wrap gap-2 mt-8">
+    {% for tag in article.tags.all %}
+      <a href="{{ tag.get_absolute_url }}" class="text-sm bg-gray-100 hover:bg-iubat-light hover:text-iubat px-3 py-1 rounded-full">#{{ tag.name }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# Reactions + share #}
+  <div class="flex flex-wrap items-center justify-between gap-4 mt-8 py-5 border-y"
+       x-data="reactionBar('{{ article.slug }}', '{{ user_reaction|default_if_none:'' }}' || null, {{ reaction_counts_json|default:'{}' }})">
+    <div class="flex items-center gap-2">
+      <template x-for="r in [{k:'like', e:'👍', l:'Like'},{k:'love', e:'❤️', l:'Love'},{k:'insightful', e:'💡', l:'Insightful'}]" :key="r.k">
+        <button @click="react(r.k)"
+                :class="active === r.k ? 'bg-iubat text-white border-iubat' : 'bg-white hover:bg-iubat-light'"
+                class="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition">
+          <span x-text="r.e"></span>
+          <span x-text="r.l"></span>
+          <span class="text-xs opacity-70" x-text="counts[r.k] || 0"></span>
+        </button>
+      </template>
+      {% if user.is_anonymous %}<span class="text-xs text-gray-400 ml-1"><a href="{% url 'accounts:login' %}" class="underline">Log in</a> to react</span>{% endif %}
+    </div>
+
+    <div class="relative" x-data="shareMenu('{{ request.build_absolute_uri }}', '{{ article.title|escapejs }}')"
+         @click.outside="open = false">
+      <button @click="open = !open" class="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium bg-white hover:bg-gray-50">
+        🔗 Share
+      </button>
+      <div x-show="open" x-cloak class="absolute right-0 mt-2 w-44 bg-white border rounded-lg shadow-lg py-1 text-sm z-20">
+        <a :href="shareFb()" target="_blank" rel="noopener" class="block px-4 py-2 hover:bg-gray-50">📘 Facebook</a>
+        <a :href="shareTwitter()" target="_blank" rel="noopener" class="block px-4 py-2 hover:bg-gray-50">🐦 Twitter / X</a>
+        <button @click="copyLink()" class="w-full text-left px-4 py-2 hover:bg-gray-50">
+          <span x-show="!copied">🔗 Copy link</span><span x-show="copied">✅ Copied!</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {# Author actions #}
+  {% if user == article.author or user.is_editor_role %}
+  <div class="flex gap-2 mt-5">
+    <a href="{% url 'articles:update' article.slug %}" class="text-sm font-semibold px-4 py-2 rounded-lg border hover:bg-gray-50">✏️ Edit</a>
+    <a href="{% url 'articles:delete' article.slug %}" class="text-sm font-semibold px-4 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50">🗑 Delete</a>
+    {% if user.is_editor_role and article.status == 'pending' %}
+      <a href="{% url 'dashboard:article_review' article.pk %}" class="text-sm font-semibold px-4 py-2 rounded-lg bg-iubat text-white ml-auto">Open review →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {# ---------------- Comments ---------------- #}
+  <section id="comments" class="mt-12"
+           x-data="commentSection('{{ article.slug }}')">
+    <h2 class="font-serif text-2xl font-extrabold mb-5">💬 Comments ({{ article.comment_count }})</h2>
+
+    {% if user.is_authenticated %}
+      <form x-ref="commentForm" @submit.prevent="submit()" id="comment-box" class="mb-8 bg-white border rounded-xl p-4">
+        {% csrf_token %}
+        <label class="font-semibold text-sm block mb-2">
+          Commenting as <span class="text-iubat">{{ user.display_name }}</span>
+          <span x-show="replyTo" class="text-amber-600 ml-2">
+            <span x-text="message"></span>
+            <button type="button" @click="cancelReply()" class="underline">Cancel</button>
+          </span>
+        </label>
+        <textarea name="body" rows="3" required maxlength="1000"
+                  class="w-full rounded-lg border-gray-300 focus:border-iubat focus:ring-iubat"
+                  placeholder="Share your thoughts…"></textarea>
+        <div class="flex justify-end mt-2">
+          <button type="submit" :disabled="loading"
+                  class="bg-iubat text-white text-sm font-semibold px-5 py-2 rounded-full hover:bg-iubat-dark">
+            <span x-show="!loading">Post comment</span><span x-show="loading">Posting…</span>
+          </button>
+        </div>
+        <p x-show="message && !replyTo" x-text="message" class="text-sm text-iubat mt-2"></p>
+      </form>
+    {% else %}
+      <div class="bg-iubat-light rounded-xl p-5 text-center mb-8">
+        <p class="text-sm">Please <a href="{% url 'accounts:login' %}" class="font-semibold underline">log in</a>
+          or <a href="{% url 'accounts:register' %}" class="font-semibold underline">register</a> to join the discussion.</p>
+      </div>
+    {% endif %}
+
+    <div class="space-y-6">
+      {% for comment in comments %}
+        <div class="flex gap-3">
+          <img src="{{ comment.user.get_profile_picture }}" class="w-10 h-10 rounded-full object-cover" alt="">
+          <div class="flex-1">
+            <div class="bg-gray-50 rounded-xl px-4 py-3">
+              <p class="text-sm font-semibold">
+                {{ comment.user.display_name }}
+                {% if comment.user.is_verified %}✔️{% endif %}
+                <span class="font-normal text-gray-400 ml-2">{{ comment.created_at|naturalday }}</span>
+              </p>
+              <p class="text-sm text-gray-700 mt-1 whitespace-pre-line">{{ comment.body }}</p>
+            </div>
+            {% if user.is_authenticated %}
+            <button @click="setReply({{ comment.pk }}, '{{ comment.user.display_name|escapejs }}')"
+                    class="text-xs text-gray-500 hover:text-iubat mt-1 ml-2">Reply</button>
+            {% endif %}
+
+            {# Replies (one level deep) #}
+            {% for reply in comment.replies.all %}
+              {% if reply.is_approved %}
+              <div class="flex gap-3 mt-3 ml-6">
+                <img src="{{ reply.user.get_profile_picture }}" class="w-8 h-8 rounded-full object-cover" alt="">
+                <div class="flex-1">
+                  <div class="bg-white border rounded-xl px-4 py-2.5">
+                    <p class="text-sm font-semibold">{{ reply.user.display_name }}
+                      <span class="font-normal text-gray-400 ml-2">{{ reply.created_at|naturalday }}</span></p>
+                    <p class="text-sm text-gray-700 mt-0.5 whitespace-pre-line">{{ reply.body }}</p>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      {% empty %}
+        <p class="text-gray-500 text-sm">No comments yet — be the first to share your thoughts.</p>
+      {% endfor %}
+    </div>
+
+    {# Comment pagination #}
+    {% if comments.has_other_pages %}
+      <div class="mt-6 flex gap-2 justify-center text-sm">
+        {% if comments.has_previous %}
+          <a href="?comment_page={{ comments.previous_page_number }}#comments" class="px-3 py-1.5 border rounded-lg bg-white">Newer</a>
+        {% endif %}
+        <span class="px-3 py-1.5">Page {{ comments.number }} of {{ comments.paginator.num_pages }}</span>
+        {% if comments.has_next %}
+          <a href="?comment_page={{ comments.next_page_number }}#comments" class="px-3 py-1.5 border rounded-lg bg-white">Older</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+</article>
+
+{# ---------------- Related articles ---------------- #}
+{% if related_articles %}
+<section class="max-w-7xl mx-auto px-4 pb-12">
+  <h2 class="font-serif text-2xl font-extrabold text-iubat-dark border-b-2 border-iubat pb-2 mb-5">Related stories</h2>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    {% for article in related_articles %}
+      {% include "includes/article_card.html" %}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

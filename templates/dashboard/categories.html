@@ -1,0 +1,54 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% block title %}Categories — Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div class="grid lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2">
+    <h1 class="font-serif text-3xl font-extrabold text-iubat-dark mb-6">Categories</h1>
+    <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-left text-xs uppercase text-gray-500">
+          <tr>
+            <th class="px-4 py-3">Order</th>
+            <th class="px-4 py-3">Name</th>
+            <th class="px-4 py-3">Slug</th>
+            <th class="px-4 py-3">Articles</th>
+            <th class="px-4 py-3">Active</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y">
+          {% for category in categories %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3">{{ category.order }}</td>
+            <td class="px-4 py-3 font-semibold">{{ category.icon }} {{ category.name }}</td>
+            <td class="px-4 py-3 text-gray-400">{{ category.slug }}</td>
+            <td class="px-4 py-3">{{ category.article_count|default:category.published_count }}</td>
+            <td class="px-4 py-3">{% if category.is_active %}✅{% else %}🚫{% endif %}</td>
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+              <a href="{% url 'dashboard:category_update' category.pk %}" class="text-iubat font-semibold px-2">Edit</a>
+              <a href="{% url 'dashboard:category_delete' category.pk %}" class="text-red-600 font-semibold px-2">Delete</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div>
+    <h2 class="font-bold text-lg mb-3">Add category</h2>
+    <form method="post" action="{% url 'dashboard:category_create' %}" class="bg-white border rounded-xl p-5 space-y-3">
+      {% csrf_token %}
+      <div><label class="font-semibold text-sm block mb-1">Name</label>{{ form.name }}</div>
+      <div><label class="font-semibold text-sm block mb-1">Icon (emoji)</label>{{ form.icon }}</div>
+      <div><label class="font-semibold text-sm block mb-1">Description</label>{{ form.description }}</div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="font-semibold text-sm block mb-1">Order</label>{{ form.order }}</div>
+        <div class="flex items-end pb-2"><label class="flex items-center gap-2 text-sm">{{ form.is_active }} Active</label></div>
+      </div>
+      <button class="w-full bg-iubat text-white text-sm font-semibold py-2.5 rounded-lg hover:bg-iubat-dark">Create category</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

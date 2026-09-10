@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ profile_user.display_name }} — IUBAT News author{% endblock %}
+{% block meta_description %}{{ profile_user.bio|default:"Read articles by"|add:" "|add:profile_user.display_name|add:" on the IUBAT Campus Newspaper." }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-10">
+  <div class="bg-white rounded-2xl border shadow-sm p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6">
+    <img src="{{ profile_user.get_profile_picture }}" class="w-28 h-28 rounded-full object-cover ring-4 ring-iubat-light" alt="">
+    <div class="text-center sm:text-left flex-1">
+      <h1 class="font-serif text-3xl font-extrabold flex items-center justify-center sm:justify-start gap-2">
+        {{ profile_user.display_name }}
+        {% if profile_user.is_verified %}<span title="Verified account">✔️</span>{% endif %}
+      </h1>
+      <p class="text-iubat font-semibold text-sm">{{ profile_user.get_role_display }}</p>
+      <div class="flex flex-wrap justify-center sm:justify-start gap-x-4 gap-y-1 text-sm text-gray-500 mt-2">
+        {% if profile_user.department %}<span>🏛 {{ profile_user.get_department_display }}</span>{% endif %}
+        {% if profile_user.batch %}<span>🎓 Batch {{ profile_user.batch }}</span>{% endif %}
+        {% if profile_user.student_id %}<span>🪪 {{ profile_user.student_id }}</span>{% endif %}
+      </div>
+      {% if profile_user.bio %}<p class="text-gray-700 mt-3 max-w-2xl">{{ profile_user.bio }}</p>{% endif %}
+      <p class="text-xs text-gray-400 mt-2">Joined {{ profile_user.date_joined|date:"F Y" }}</p>
+    </div>
+    {% if user == profile_user %}
+      <a href="{% url 'accounts:profile_edit' %}" class="shrink-0 px-4 py-2 rounded-lg border text-sm font-semibold hover:bg-gray-50">✏️ Edit profile</a>
+    {% endif %}
+  </div>
+
+  <div class="flex items-center gap-3 mt-10 mb-5 border-b-2 border-iubat pb-2">
+    <h2 class="font-serif text-2xl font-extrabold text-iubat-dark">Published articles</h2>
+    <span class="bg-iubat-light text-iubat text-sm font-semibold px-2.5 py-0.5 rounded-full">{{ article_total }}</span>
+  </div>
+
+  {% if articles %}
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      {% for article in articles %}
+        {% include "includes/article_card.html" with article=article %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="bg-white border rounded-xl p-10 text-center text-gray-500">
+      <p class="text-4xl mb-2">✍️</p>
+      {% if user == profile_user %}
+        <p>No published articles yet — <a href="{% url 'articles:create' %}" class="text-iubat font-semibold underline">write your first story</a>.</p>
+      {% else %}
+        <p>This author hasn't published any articles yet.</p>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

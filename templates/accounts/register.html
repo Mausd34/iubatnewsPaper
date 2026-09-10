@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Register — {{ BRAND.NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-12">
+  <div class="bg-white rounded-2xl border shadow-sm p-8">
+    <h1 class="font-serif text-3xl font-extrabold text-iubat-dark text-center mb-1">Join IUBAT Campus News</h1>
+    <p class="text-center text-gray-500 text-sm mb-6">Read, comment, react — or apply as a student contributor.</p>
+
+    <form method="post" enctype="multipart/form-data" class="space-y-4">
+      {% csrf_token %}
+
+      {% if form.errors %}
+        <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm">
+          Please correct the highlighted fields below.
+        </div>
+      {% endif %}
+
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label class="font-semibold text-sm block mb-1">First name *</label>
+          {{ form.first_name }}{{ form.first_name.errors }}
+        </div>
+        <div>
+          <label class="font-semibold text-sm block mb-1">Last name *</label>
+          {{ form.last_name }}{{ form.last_name.errors }}
+        </div>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label class="font-semibold text-sm block mb-1">Username *</label>
+          {{ form.username }}{{ form.username.errors }}
+        </div>
+        <div>
+          <label class="font-semibold text-sm block mb-1">IUBAT email *</label>
+          {{ form.email }}{{ form.email.errors }}
+        </div>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label class="font-semibold text-sm block mb-1">Password *</label>
+          {{ form.password1 }}{{ form.password1.errors }}
+        </div>
+        <div>
+          <label class="font-semibold text-sm block mb-1">Confirm password *</label>
+          {{ form.password2 }}{{ form.password2.errors }}
+        </div>
+      </div>
+
+      <div>
+        <label class="font-semibold text-sm block mb-1">I want to join as</label>
+        {{ form.role }}
+      </div>
+
+      <div class="grid sm:grid-cols-3 gap-4 student-fields">
+        <div>
+          <label class="font-semibold text-sm block mb-1">Student ID</label>
+          {{ form.student_id }}{{ form.student_id.errors }}
+        </div>
+        <div>
+          <label class="font-semibold text-sm block mb-1">Department</label>
+          {{ form.department }}
+        </div>
+        <div>
+          <label class="font-semibold text-sm block mb-1">Batch (year)</label>
+          {{ form.batch }}
+        </div>
+      </div>
+
+      <p class="text-xs text-gray-500">
+        By registering you agree to respect fellow community members. Contributed articles
+        are checked by editors before publication.
+      </p>
+      <button type="submit" class="w-full bg-iubat text-white font-semibold py-2.5 rounded-lg hover:bg-iubat-dark">
+        Create my account
+      </button>
+    </form>
+
+    <p class="text-center text-sm text-gray-500 mt-5">
+      Already have an account?
+      <a href="{% url 'accounts:login' %}" class="text-iubat font-semibold hover:underline">Log in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

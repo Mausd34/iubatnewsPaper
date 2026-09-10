@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Log in — {{ BRAND.NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-14">
+  <div class="bg-white rounded-2xl border shadow-sm p-8">
+    <h1 class="font-serif text-3xl font-extrabold text-iubat-dark text-center mb-1">Welcome back</h1>
+    <p class="text-center text-gray-500 text-sm mb-6">Log in to comment, react and submit stories.</p>
+
+    {% if form.errors %}
+      <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm mb-4">
+        Invalid username or password. Please try again.
+      </div>
+    {% endif %}
+
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <div>
+        <label class="font-semibold text-sm block mb-1">Username</label>
+        {{ form.username }}
+      </div>
+      <div>
+        <label class="font-semibold text-sm block mb-1">Password</label>
+        {{ form.password }}
+      </div>
+      <button type="submit" class="w-full bg-iubat text-white font-semibold py-2.5 rounded-lg hover:bg-iubat-dark">
+        Log in
+      </button>
+    </form>
+
+    <p class="text-center text-sm text-gray-500 mt-5">
+      New to IUBAT News?
+      <a href="{% url 'accounts:register' %}" class="text-iubat font-semibold hover:underline">Create an account</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

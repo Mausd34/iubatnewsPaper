@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8 grid lg:grid-cols-5 gap-8">
+  {# ---------------- Sidebar ---------------- #}
+  <aside class="lg:col-span-1">
+    <div class="bg-white rounded-xl border shadow-sm p-4 lg:sticky lg:top-20">
+      <p class="text-xs uppercase tracking-widest text-gray-400 font-bold mb-2 px-2">Dashboard</p>
+      <nav class="space-y-1 text-sm font-medium">
+        <a href="{% url 'dashboard:home' %}"
+           class="block px-3 py-2 rounded-lg hover:bg-iubat-light
+           {% if request.resolver_match.url_name == 'home' %}bg-iubat text-white{% endif %}">📊 Overview</a>
+
+        {% if user.can_submit_articles %}
+          <a href="{% url 'articles:create' %}" class="block px-3 py-2 rounded-lg hover:bg-iubat-light">✍️ Write article</a>
+          <a href="{% url 'articles:my_articles' %}" class="block px-3 py-2 rounded-lg hover:bg-iubat-light">📄 My articles</a>
+        {% endif %}
+
+        {% if user.is_editor_role %}
+          <p class="text-xs uppercase tracking-widest text-gray-400 font-bold mt-4 mb-2 px-2">Editorial</p>
+          <a href="{% url 'dashboard:pending_articles' %}"
+             class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-iubat-light
+             {% if request.resolver_match.url_name == 'pending_articles' %}bg-iubat text-white{% endif %}">
+             ⏳ Pending queue
+             {% if pending_total %}<span class="bg-amber-400 text-gray-900 text-xs font-bold px-2 rounded-full">{{ pending_total }}</span>{% endif %}
+          </a>
+          <a href="{% url 'dashboard:comment_moderation' %}"
+             class="block px-3 py-2 rounded-lg hover:bg-iubat-light
+             {% if 'comment' in request.resolver_match.url_name %}bg-iubat text-white{% endif %}">💬 Comments</a>
+          <a href="{% url 'dashboard:categories' %}"
+             class="block px-3 py-2 rounded-lg hover:bg-iubat-light
+             {% if 'categor' in request.resolver_match.url_name %}bg-iubat text-white{% endif %}">🗂 Categories</a>
+          <a href="{% url 'newsletter:list' %}"
+             class="block px-3 py-2 rounded-lg hover:bg-iubat-light">📬 Newsletters</a>
+        {% endif %}
+
+        {% if user.is_admin_role %}
+          <p class="text-xs uppercase tracking-widest text-gray-400 font-bold mt-4 mb-2 px-2">Administration</p>
+          <a href="{% url 'dashboard:users' %}"
+             class="block px-3 py-2 rounded-lg hover:bg-iubat-light
+             {% if request.resolver_match.url_name == 'users' or request.resolver_match.url_name == 'user_edit' %}bg-iubat text-white{% endif %}">👥 Users</a>
+          <a href="/admin/" class="block px-3 py-2 rounded-lg hover:bg-iubat-light">⚙️ Django admin</a>
+        {% endif %}
+      </nav>
+    </div>
+  </aside>
+
+  {# ---------------- Main panel ---------------- #}
+  <section class="lg:col-span-4 min-w-0">
+    {% block dashboard_content %}{% endblock %}
+  </section>
+</div>
+{% endblock %}

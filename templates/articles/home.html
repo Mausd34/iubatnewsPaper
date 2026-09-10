@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ BRAND.NAME }} — Campus News, Events, Sports & Achievements at IUBAT{% endblock %}
+
+{% block content %}
+{# ---------------- Breaking news ticker ---------------- #}
+{% if breaking %}
+<div class="bg-red-600 text-white text-sm">
+  <div class="max-w-7xl mx-auto px-4 py-2 flex items-center gap-3">
+    <span class="bg-white text-red-600 font-bold text-xs px-2 py-0.5 rounded uppercase shrink-0">Breaking</span>
+    <a href="{{ breaking.get_absolute_url }}" class="hover:underline truncate">{{ breaking.title }}</a>
+  </div>
+</div>
+{% endif %}
+
+{# ---------------- HERO / FEATURED ---------------- #}
+{% if hero_article %}
+<section class="max-w-7xl mx-auto px-4 mt-6">
+  <div class="grid lg:grid-cols-3 gap-5">
+    {# Lead story #}
+    <a href="{{ hero_article.get_absolute_url }}"
+       class="lg:col-span-2 relative rounded-2xl overflow-hidden group min-h-[340px] lg:min-h-[460px] bg-gray-900">
+      {% if hero_article.featured_image %}
+        <img src="{{ hero_article.featured_image.url }}" alt="{{ hero_article.title }}"
+             class="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:opacity-100 group-hover:scale-105 transition duration-700">
+      {% else %}
+        <div class="absolute inset-0 bg-gradient-to-br from-iubat to-iubat-dark"></div>
+      {% endif %}
+      <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent"></div>
+      <div class="absolute bottom-0 p-6 lg:p-8 text-white">
+        <div class="flex items-center gap-2 mb-2 text-xs font-semibold">
+          <span class="bg-iubat px-2.5 py-1 rounded-full uppercase tracking-wide">{{ hero_article.category.name }}</span>
+          <span>⭐ Featured</span>
+        </div>
+        <h1 class="font-serif font-extrabold text-2xl lg:text-4xl leading-tight mb-2">{{ hero_article.title }}</h1>
+        <p class="text-sm text-gray-200 line-clamp-2 max-w-2xl">{{ hero_article.excerpt }}</p>
+        <p class="text-xs text-gray-300 mt-3">By <span class="font-semibold">{{ hero_article.author.display_name }}</span>
+          · {{ hero_article.published_at|naturalday }} · ⏱ {{ hero_article.reading_time }} min read</p>
+      </div>
+    </a>
+
+    {# Side featured list #}
+    <div class="flex flex-col gap-4">
+      {% for article in featured_articles %}
+        <a href="{{ article.get_absolute_url }}"
+           class="flex gap-3 bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition flex-1 group">
+          <div class="w-28 shrink-0 bg-gray-200 overflow-hidden">
+            {% if article.featured_image %}
+              <img src="{{ article.featured_image.url }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="">
+            {% endif %}
+          </div>
+          <div class="p-3">
+            <span class="text-[10px] font-bold uppercase tracking-wide text-iubat">{{ article.category.name }}</span>
+            <h3 class="font-serif font-bold text-sm leading-snug line-clamp-3 group-hover:text-iubat">{{ article.title }}</h3>
+            <span class="text-[11px] text-gray-400">{{ article.published_at|naturalday }}</span>
+          </div>
+        </a>
+      {% empty %}
+        <div class="bg-white border rounded-xl p-6 text-gray-500 text-sm">
+          More featured stories will appear here soon.
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ---------------- LATEST + TRENDING ---------------- #}
+<section class="max-w-7xl mx-auto px-4 mt-12 grid lg:grid-cols-3 gap-8">
+  <div class="lg:col-span-2">
+    <div class="flex items-center justify-between border-b-2 border-iubat pb-2 mb-5">
+      <h2 class="font-serif text-2xl font-extrabold text-iubat-dark">📰 Latest News</h2>
+      <a href="{% url 'articles:list' %}" class="text-sm font-semibold text-iubat hover:underline">View all →</a>
+    </div>
+    <div class="grid sm:grid-cols-2 gap-5">
+      {% for article in latest_articles %}
+        {% include "includes/article_card.html" %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <aside>
+    <div class="bg-white rounded-xl border shadow-sm p-5 mb-6">
+      <h2 class="font-serif text-xl font-extrabold text-iubat-dark border-b pb-2 mb-4">🔥 Trending this week</h2>
+      <ol class="space-y-4">
+        {% for article in trending_articles %}
+          <li class="flex gap-3 group">
+            <span class="text-3xl font-extrabold text-iubat/20 leading-none w-7">{{ forloop.counter }}</span>
+            <div>
+              <a href="{{ article.get_absolute_url }}" class="font-semibold text-sm leading-snug group-hover:text-iubat line-clamp-2">{{ article.title }}</a>
+              <p class="text-xs text-gray-400 mt-1">{{ article.category.name }} · 👁 {{ article.views_count }}</p>
+            </div>
+          </li>
+        {% empty %}
+          <li class="text-sm text-gray-500">Trending stories appear as readers engage.</li>
+        {% endfor %}
+      </ol>
+    </div>
+
+    {% if user.is_anonymous %}
+    <div class="bg-iubat-light border border-iubat/20 rounded-xl p-5 text-center">
+      <h3 class="font-serif font-bold text-lg text-iubat-dark">Have a story to tell?</h3>
+      <p class="text-sm text-gray-600 my-2">Join as a student contributor and get published on the portal.</p>
+      <a href="{% url 'accounts:register' %}" class="inline-block mt-2 bg-iubat text-white text-sm font-semibold px-5 py-2 rounded-full hover:bg-iubat-dark">Become a contributor</a>
+    </div>
+    {% elif user.can_submit_articles %}
+    <div class="bg-iubat-light border border-iubat/20 rounded-xl p-5 text-center">
+      <h3 class="font-serif font-bold text-lg text-iubat-dark">Ready to write?</h3>
+      <a href="{% url 'articles:create' %}" class="inline-block mt-2 bg-iubat text-white text-sm font-semibold px-5 py-2 rounded-full hover:bg-iubat-dark">✍️ Submit an article</a>
+    </div>
+    {% endif %}
+  </aside>
+</section>
+
+{# ---------------- CATEGORY SECTIONS ---------------- #}
+{% for category, articles in category_sections %}
+<section class="max-w-7xl mx-auto px-4 mt-12">
+  <div class="flex items-center justify-between border-b-2 border-iubat pb-2 mb-5">
+    <h2 class="font-serif text-2xl font-extrabold text-iubat-dark">{{ category.icon }} {{ category.name }}</h2>
+    <a href="{{ category.get_absolute_url }}" class="text-sm font-semibold text-iubat hover:underline">More →</a>
+  </div>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    {% for article in articles %}
+      {% include "includes/article_card.html" %}
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

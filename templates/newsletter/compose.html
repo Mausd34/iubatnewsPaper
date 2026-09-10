@@ -1,0 +1,23 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% block title %}Compose newsletter — Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div class="max-w-3xl">
+  <h1 class="font-serif text-3xl font-extrabold text-iubat-dark mb-1">
+    {% if email_obj and email_obj.pk %}Edit draft{% else %}Compose newsletter{% endif %}
+  </h1>
+  <p class="text-sm text-gray-500 mb-6">Will be delivered to <strong>{{ active_subscribers }}</strong> active subscriber{{ active_subscribers|pluralize }}.</p>
+
+  <form method="post" class="bg-white border rounded-xl p-6 space-y-4">
+    {% csrf_token %}
+    <div><label class="font-semibold text-sm block mb-1">Subject</label>{{ form.subject }}{{ form.subject.errors }}</div>
+    <div><label class="font-semibold text-sm block mb-1">Body (HTML allowed)</label>{{ form.body }}{{ form.body.errors }}</div>
+    <div class="flex flex-wrap justify-end gap-3 pt-3 border-t">
+      <button name="action" value="save" class="px-5 py-2.5 rounded-lg border text-sm font-semibold hover:bg-gray-50">💾 Save draft</button>
+      <button name="action" value="send"
+              onclick="return confirm('Send this newsletter to {{ active_subscribers }} subscribers now?')"
+              class="px-5 py-2.5 rounded-lg bg-iubat text-white text-sm font-semibold hover:bg-iubat-dark">📨 Send now</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
